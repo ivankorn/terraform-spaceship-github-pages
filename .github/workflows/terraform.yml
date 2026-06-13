@@ -1,0 +1,72 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate:
+    name: Validate and Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.0"
+
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.50.3
+
+      - name: TFLint Init
+        run: tflint --init
+
+      - name: TFLint
+        run: tflint
+
+      - name: Terraform Docs Check
+        uses: terraform-docs/gh-actions@v1.0.0
+        with:
+          working-dir: .
+          output-file: README.md
+          output-method: inject
+          template: |-
+            <!-- BEGIN_TF_DOCS -->
+            <!-- END_TF_DOCS -->
+          fail-on-diff: true
+
+  test:
+    name: Terraform Test
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.0"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Test
+        # Mock providers are supported in Terraform 1.7+
+        # Testing relies on mock data since we don't have SPACESHIP_API_KEY / SPACESHIP_API_SECRET in untrusted PRs
+        run: terraform test
