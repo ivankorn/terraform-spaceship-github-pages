@@ -20,14 +20,17 @@ resource "github_repository" "pages" {
   auto_init            = true
   license_template     = var.license_template
   vulnerability_alerts = true
+}
 
-  pages {
-    source {
-      branch = "master"
-      path   = "/"
-    }
-    cname = var.domain
+resource "github_repository_pages" "pages" {
+  repository = github_repository.pages.name
+
+  source {
+    branch = "master"
+    path   = "/"
   }
+
+  cname = var.domain
 }
 
 resource "spaceship_dns_records" "pages" {
@@ -75,6 +78,6 @@ resource "github_branch_protection" "master" {
   require_signed_commits          = true
 
   required_pull_request_reviews {
-    required_approving_review_count = 1
+    required_approving_review_count = 2
   }
 }
