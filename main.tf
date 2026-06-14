@@ -66,3 +66,15 @@ resource "spaceship_dns_records" "pages" {
     }
   ])
 }
+
+resource "github_branch_protection" "master" {
+  repository_id                   = github_repository.pages.node_id
+  pattern                         = "master"
+  enforce_admins                  = false
+  require_conversation_resolution = true
+  require_signed_commits          = true
+
+  required_pull_request_reviews {
+    required_approving_review_count = 1
+  }
+}
