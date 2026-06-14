@@ -20,6 +20,12 @@ variable "github_repository_name" {
   type        = string
 }
 
+variable "github_repository_visibility" {
+  description = "Visibility of the GitHub repository (public or private)"
+  type        = string
+  default     = "private"
+}
+
 variable "github_user" {
   description = "Optional GitHub user to create the repository under"
   type        = string
