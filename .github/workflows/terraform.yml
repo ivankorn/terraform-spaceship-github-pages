@@ -33,6 +33,17 @@ jobs:
         with:
           tflint_version: v0.50.3
 
+      - name: Install pre-commit dependencies
+        run: |
+          mkdir -p $HOME/.local/bin
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          mkdir -p /tmp/tfdocs
+          curl -sSLo /tmp/tfdocs/tfdocs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/download/v0.24.0/terraform-docs-v0.24.0-linux-amd64.tar.gz
+          tar -xzf /tmp/tfdocs/tfdocs.tar.gz -C /tmp/tfdocs
+          chmod +x /tmp/tfdocs/terraform-docs
+          mv /tmp/tfdocs/terraform-docs $HOME/.local/bin/
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/.local/bin
+
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
 
