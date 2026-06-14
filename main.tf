@@ -16,11 +16,12 @@ locals {
 }
 
 resource "github_repository" "pages" {
-  name             = var.github_repository_name
-  description      = var.github_repository_description
-  visibility       = "public"
-  auto_init        = true
-  license_template = var.license_template
+  name                 = var.github_repository_name
+  description          = var.github_repository_description
+  visibility           = var.github_repository_visibility
+  auto_init            = true
+  license_template     = var.license_template
+  vulnerability_alerts = true
 
   pages {
     source {
