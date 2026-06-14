@@ -5,7 +5,7 @@ data "github_user" "current" {
 }
 
 locals {
-  github_owner = coalesce(var.github_organization, var.github_user, "placeholder")
+  github_owner = var.github_organization != "" ? var.github_organization : (var.github_user != "" ? var.github_user : try(data.github_user.current.login, "unknown-user"))
 
   github_pages_ips = [
     "185.199.108.153",
