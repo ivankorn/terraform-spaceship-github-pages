@@ -38,6 +38,7 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
+| [github_branch_protection.master](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection) | resource |
 | [github_repository.pages](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) | resource |
 | [spaceship_dns_records.pages](https://registry.terraform.io/providers/namecheap/spaceship/latest/docs/resources/dns_records) | resource |
 | [github_user.current](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/user) | data source |
