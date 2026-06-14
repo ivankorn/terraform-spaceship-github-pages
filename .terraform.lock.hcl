@@ -6,6 +6,8 @@ provider "registry.terraform.io/integrations/github" {
   constraints = "~> 6.0"
   hashes = [
     "h1:bGz4LIep/7PVrqy6P8cTYbAJpdxXGrupUJjkCczlzIs=",
+    "h1:ghFGRYa6LdR4BjW0Fe8HXKI0ZmA1bTrwjhXDeZG7+3E=",
+    "h1:hHOwf554tYL9pQS2uRPbaAGSXRbbBJ/+HtQAoT9mtuA=",
     "zh:3e1a4081ecb9518fdf0074db83c16ad00dc81ffe8249a6e3cf1894e947e28df6",
     "zh:4cb8224b7f530795b674ac044675f6b22a7c9154f55eb9f76c5af6c7534056a4",
     "zh:560bc08637926191f6871a89e986022ca67c70afda5bebca34b5216e6fac69c9",
@@ -25,8 +27,10 @@ provider "registry.terraform.io/integrations/github" {
 
 provider "registry.terraform.io/namecheap/spaceship" {
   version     = "0.4.1"
-  constraints = ">= 0.0.1"
+  constraints = ">= 0.4.1"
   hashes = [
+    "h1:2+36+sh26phbLsKqtI11Z+4+/FwQYKnPH+CqW5LGFYc=",
+    "h1:FLJJ6QbTAbLEW0UMm8EXkEkWKy0SlpReoZup6TEoP/k=",
     "h1:zKUSnv35ToAcXYns9JRt+cdHtMYs7CfXKgcEGFhxSC4=",
     "zh:2794b17b32b25275890bb81c17fc58ac5fde44277e8215a61601f66bfbf377e2",
     "zh:56d4d56be26a6b7341f0858a182cbb0db9b279db04de6f05178917c774c620eb",

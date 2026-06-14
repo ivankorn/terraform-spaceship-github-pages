@@ -1,14 +1,20 @@
 name: Terraform CI
 
+permissions: read-all
+
 on:
   push:
     branches: [master]
   pull_request:
     branches: [master]
 
+env:
+  TERRAFORM_VERSION: "1.15.6"
+  TFLINT_VERSION: "0.50.3"
+
 jobs:
-  validate:
-    name: Validate and Format
+  validate_format_lint_scan_test:
+    name: Validate, Format, Lint, Scan and Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -17,7 +23,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: "1.11.0"
+          terraform_version: "${{ env.TERRAFORM_VERSION }}"
 
       - name: Terraform Format
         run: terraform fmt -check -recursive
@@ -31,37 +37,40 @@ jobs:
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v6
         with:
-          tflint_version: v0.50.3
+          tflint_version: "v${{ env.TFLINT_VERSION }}"
 
       - name: Install pre-commit dependencies
         run: |
           mkdir -p $HOME/.local/bin
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+          # Install terraform-docs
           mkdir -p /tmp/tfdocs
-          curl -sSLo /tmp/tfdocs/tfdocs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/download/v0.24.0/terraform-docs-v0.24.0-linux-amd64.tar.gz
+          curl -sL "$(curl -s https://api.github.com/repos/terraform-docs/terraform-docs/releases/latest | grep -o -E "https://.+?-linux-amd64\.tar\.gz")" > /tmp/tfdocs/tfdocs.tar.gz
           tar -xzf /tmp/tfdocs/tfdocs.tar.gz -C /tmp/tfdocs
           chmod +x /tmp/tfdocs/terraform-docs
           mv /tmp/tfdocs/terraform-docs $HOME/.local/bin/
+
+          # Install trivy
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/.local/bin
+          
+          # Install checkov
+          pip3 install checkov
+          
+          # Install terrascan
+          curl -sL "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
+          tar -xzf terrascan.tar.gz terrascan
+          chmod +x terrascan
+          mv terrascan $HOME/.local/bin/
+          
+          # Install tfupdate
+          curl -sL "$(curl -s https://api.github.com/repos/minamijoyo/tfupdate/releases/latest | grep -o -E "https://.+?_linux_amd64.tar.gz")" > tfupdate.tar.gz
+          tar -xzf tfupdate.tar.gz tfupdate
+          chmod +x tfupdate
+          mv tfupdate $HOME/.local/bin/
 
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
-
-  test:
-    name: Terraform Test
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v6
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: "1.11.0"
-
-      - name: Terraform Init
-        run: terraform init
 
       - name: Terraform Test
         # Mock providers are supported in Terraform 1.7+

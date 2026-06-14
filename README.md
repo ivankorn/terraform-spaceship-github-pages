@@ -1,5 +1,7 @@
 # terraform-spaceship-github-pages
 
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine/)
+
 A Terraform/OpenTofu module to provision a GitHub repository with GitHub Pages enabled, and to configure the necessary DNS A and CNAME records using the [Spaceship provider](https://registry.terraform.io/providers/namecheap/spaceship/latest).
 
 ## Features
@@ -13,13 +15,27 @@ A Terraform/OpenTofu module to provision a GitHub repository with GitHub Pages e
 > GitHub Pages requires the repository to be public for GitHub Free accounts.
 > According to the [official documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages), "GitHub Pages is available in public repositories with GitHub Free and GitHub Free for organizations, and in public and private repositories with GitHub Pro, GitHub Team, GitHub Enterprise Cloud, and GitHub Enterprise."
 > Keep this in mind since the default `github_repository_visibility` is set to `"private"`!
+> For personal use on a free GitHub account, you need to set the `github_repository_visibility` to `"public"`!
+
+## Usage Example
+
+```hcl
+module "spaceship_github_pages" {
+  source = "../"
+
+  domain                 = "example-test.com"
+  github_repository_name = "example-test-repo"
+}
+```
+
+See the [examples/](examples/) directory for more use cases.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 | ---- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | 1.15.6 |
 | <a name="requirement_github"></a> [github](#requirement\_github) | ~> 6.0 |
 | <a name="requirement_spaceship"></a> [spaceship](#requirement\_spaceship) | >= 0.4.1 |
 
@@ -40,6 +56,7 @@ No modules.
 | ---- | ---- |
 | [github_branch_protection.master](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection) | resource |
 | [github_repository.pages](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) | resource |
+| [github_repository_pages.pages](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_pages) | resource |
 | [spaceship_dns_records.pages](https://registry.terraform.io/providers/namecheap/spaceship/latest/docs/resources/dns_records) | resource |
 | [github_user.current](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/user) | data source |
 
@@ -65,3 +82,17 @@ No modules.
 | <a name="output_repository_name"></a> [repository\_name](#output\_repository\_name) | Name of the created GitHub repository |
 | <a name="output_repository_url"></a> [repository\_url](#output\_repository\_url) | URL of the created GitHub repository |
 <!-- END_TF_DOCS -->
+
+## Contributing
+
+Report issues/questions/feature requests on in the [issues](https://github.com/korn-systems/terraform-spaceship-github-pages/issues/new) section.
+
+Full contributing [guidelines are covered here](.github/CONTRIBUTING.md).
+
+## License
+
+Apache 2 Licensed. See [LICENSE](LICENSE) for full details.
+
+## Security
+
+If you discover any security related issues, please email `ivan.kornienko@gmail.com` instead of using the issue tracker. All security vulnerabilities will be promptly addressed.

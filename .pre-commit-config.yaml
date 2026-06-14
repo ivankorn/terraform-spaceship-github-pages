@@ -6,4 +6,16 @@ repos:
       - id: terraform_validate
       - id: terraform_tflint
       - id: terraform_trivy
+      - id: terraform_checkov
+      - id: terrascan
+        language: system
+        pass_filenames: false
+        entry: bash -c 'for d in $(find . -name ".terraform" -prune -o -name ".git" -prune -o -type f -name "*.tf" -exec dirname {} \; | sort -u); do terrascan scan -i terraform --non-recursive -d "$d" || exit 1; done'
+      - id: tfupdate
       - id: terraform_docs
+      - id: terraform_providers_lock
+        args:
+          - --hook-config=--mode=check-lockfile-is-cross-platform
+          - --args=-platform=linux_amd64
+          - --args=-platform=darwin_amd64
+          - --args=-platform=darwin_arm64
