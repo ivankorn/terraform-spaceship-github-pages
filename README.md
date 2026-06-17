@@ -17,6 +17,13 @@ A Terraform/OpenTofu module to provision a GitHub repository with GitHub Pages e
 > Keep this in mind since the default `github_repository_visibility` is set to `"private"`!
 > For personal use on a free GitHub account, you need to set the `github_repository_visibility` to `"public"`!
 
+## Authentication
+
+This module requires authentication with both GitHub and Spaceship:
+
+1. **GitHub**: You can authenticate using the GitHub CLI by running `gh auth login`, or by setting the `GITHUB_TOKEN` environment variable.
+2. **Spaceship**: You must provide your Spaceship API credentials by setting the `SPACESHIP_API_KEY` and `SPACESHIP_API_SECRET` environment variables.
+
 ## Usage Example
 
 ```hcl
@@ -45,6 +52,7 @@ See the [examples/](examples/) directory for more use cases.
 | ---- | ------- |
 | <a name="provider_github"></a> [github](#provider\_github) | 6.12.1 |
 | <a name="provider_spaceship"></a> [spaceship](#provider\_spaceship) | 0.4.1 |
+| <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
 
 ## Modules
 
@@ -54,24 +62,27 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [github_branch_protection.master](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection) | resource |
-| [github_repository.pages](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) | resource |
-| [github_repository_pages.pages](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_pages) | resource |
-| [spaceship_dns_records.pages](https://registry.terraform.io/providers/namecheap/spaceship/latest/docs/resources/dns_records) | resource |
+| [github_branch_default.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_default) | resource |
+| [github_branch_protection.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection) | resource |
+| [github_repository.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) | resource |
+| [github_repository_pages.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_pages) | resource |
+| [github_repository_vulnerability_alerts.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_vulnerability_alerts) | resource |
+| [spaceship_dns_records.self](https://registry.terraform.io/providers/namecheap/spaceship/latest/docs/resources/dns_records) | resource |
+| [time_sleep.wait_for_dns](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 | [github_user.current](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/user) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_branch_protection"></a> [branch\_protection](#input\_branch\_protection) | Settings for the GitHub branch protection | <pre>object({<br/>    pattern                         = optional(string)<br/>    enforce_admins                  = optional(bool, true)<br/>    require_signed_commits          = optional(bool, true)<br/>    required_linear_history         = optional(bool, true)<br/>    require_conversation_resolution = optional(bool, true)<br/>    allows_deletions                = optional(bool, false)<br/>    allows_force_pushes             = optional(bool, false)<br/>    lock_branch                     = optional(bool, false)<br/>    force_push_bypassers            = optional(list(string), [])<br/>    required_status_checks = optional(object({<br/>      strict   = optional(bool, true)<br/>      contexts = optional(list(string), [])<br/>    }))<br/>    required_pull_request_reviews = optional(object({<br/>      dismiss_stale_reviews           = optional(bool, true)<br/>      restrict_dismissals             = optional(bool, true)<br/>      dismissal_restrictions          = optional(list(string), [])<br/>      pull_request_bypassers          = optional(list(string), [])<br/>      require_code_owner_reviews      = optional(bool, true)<br/>      required_approving_review_count = optional(number, 2)<br/>      require_last_push_approval      = optional(bool, false)<br/>    }), {})<br/>    restrict_pushes = optional(object({<br/>      blocks_creations = optional(bool, true)<br/>      push_allowances  = optional(list(string), [])<br/>    }), {})<br/>  })</pre> | `{}` | no |
+| <a name="input_dns_settings"></a> [dns\_settings](#input\_dns\_settings) | Additional custom DNS records for Spaceship | <pre>object({<br/>    ttl = optional(number, 60)<br/>    records = optional(list(object({<br/>      type             = string<br/>      name             = string<br/>      address          = optional(string)<br/>      alias_name       = optional(string)<br/>      association_data = optional(string)<br/>      cname            = optional(string)<br/>      exchange         = optional(string)<br/>      flag             = optional(number)<br/>      matching         = optional(number)<br/>      nameserver       = optional(string)<br/>      pointer          = optional(string)<br/>      port             = optional(string)<br/>      port_number      = optional(number)<br/>      preference       = optional(number)<br/>      priority         = optional(number)<br/>      protocol         = optional(string)<br/>      scheme           = optional(string)<br/>      selector         = optional(number)<br/>      service          = optional(string)<br/>      svc_params       = optional(string)<br/>      svc_priority     = optional(number)<br/>      tag              = optional(string)<br/>      target           = optional(string)<br/>      target_name      = optional(string)<br/>      ttl              = optional(number)<br/>      usage            = optional(number)<br/>      value            = optional(string)<br/>      weight           = optional(number)<br/>    })), [])<br/>  })</pre> | `{}` | no |
 | <a name="input_domain"></a> [domain](#input\_domain) | The custom domain for GitHub Pages (e.g., example.com) | `string` | n/a | yes |
-| <a name="input_github_organization"></a> [github\_organization](#input\_github\_organization) | Optional GitHub organization to create the repository in | `string` | `""` | no |
-| <a name="input_github_repository_description"></a> [github\_repository\_description](#input\_github\_repository\_description) | Description for the GitHub repository | `string` | `"GitHub Pages repository"` | no |
-| <a name="input_github_repository_name"></a> [github\_repository\_name](#input\_github\_repository\_name) | Name of the GitHub repository to create | `string` | n/a | yes |
-| <a name="input_github_repository_visibility"></a> [github\_repository\_visibility](#input\_github\_repository\_visibility) | Visibility of the GitHub repository (public or private) | `string` | `"private"` | no |
-| <a name="input_github_user"></a> [github\_user](#input\_github\_user) | Optional GitHub user to create the repository under | `string` | `""` | no |
-| <a name="input_license_template"></a> [license\_template](#input\_license\_template) | License template for the GitHub repository | `string` | `"apache-2.0"` | no |
-| <a name="input_ttl"></a> [ttl](#input\_ttl) | TTL for the DNS records | `number` | `3600` | no |
+| <a name="input_name"></a> [name](#input\_name) | Name of the GitHub repository to create | `string` | n/a | yes |
+| <a name="input_organization"></a> [organization](#input\_organization) | Optional GitHub organization to create the repository in | `string` | `""` | no |
+| <a name="input_pages_settings"></a> [pages\_settings](#input\_pages\_settings) | Settings for the GitHub Pages configuration | <pre>object({<br/>    build_type     = optional(string, "legacy")<br/>    public         = optional(bool)<br/>    https_enforced = optional(bool, true)<br/>    source = optional(object({<br/>      branch = string<br/>      path   = optional(string, "/")<br/>      }), {<br/>      branch = "master"<br/>      path   = "/"<br/>    })<br/>  })</pre> | `{}` | no |
+| <a name="input_repository_settings"></a> [repository\_settings](#input\_repository\_settings) | Detailed settings for the GitHub repository | <pre>object({<br/>    description                 = optional(string, "GitHub Pages repository")<br/>    visibility                  = optional(string, "private")<br/>    homepage_url                = optional(string)<br/>    fork                        = optional(bool, false)<br/>    source_owner                = optional(string)<br/>    source_repo                 = optional(string)<br/>    has_issues                  = optional(bool, true)<br/>    has_discussions             = optional(bool, false)<br/>    has_projects                = optional(bool, false)<br/>    has_wiki                    = optional(bool, false)<br/>    is_template                 = optional(bool, false)<br/>    allow_merge_commit          = optional(bool, false)<br/>    allow_squash_merge          = optional(bool, false)<br/>    allow_rebase_merge          = optional(bool, true)<br/>    allow_auto_merge            = optional(bool, false)<br/>    allow_update_branch         = optional(bool, true)<br/>    allow_forking               = optional(bool, true)<br/>    squash_merge_commit_title   = optional(string, "PR_TITLE")<br/>    squash_merge_commit_message = optional(string, "PR_BODY")<br/>    merge_commit_title          = optional(string)<br/>    merge_commit_message        = optional(string)<br/>    delete_branch_on_merge      = optional(bool, true)<br/>    web_commit_signoff_required = optional(bool, true)<br/>    auto_init                   = optional(bool, true)<br/>    gitignore_template          = optional(string)<br/>    license_template            = optional(string, "apache-2.0")<br/>    default_branch              = optional(string, "master")<br/>    archived                    = optional(bool, false)<br/>    archive_on_destroy          = optional(bool, false)<br/>    topics                      = optional(list(string), [])<br/>    vulnerability_alerts        = optional(bool, true)<br/>    template = optional(object({<br/>      owner                = string<br/>      repository           = string<br/>      include_all_branches = optional(bool, false)<br/>    }))<br/>    security_and_analysis = optional(object({<br/>      advanced_security = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_push_protection = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_ai_detection = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_non_provider_patterns = optional(object({<br/>        status = string<br/>      }))<br/>    }))<br/>  })</pre> | `{}` | no |
+| <a name="input_user"></a> [user](#input\_user) | Optional GitHub user to create the repository under | `string` | `""` | no |
 
 ## Outputs
 
