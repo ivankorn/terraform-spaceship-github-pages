@@ -7,6 +7,7 @@ repos:
       - id: terraform_tflint
       - id: terraform_trivy
       - id: terraform_checkov
+# Terrascan is disabled due to redundancy with Checkov/Trivy and its poor support for evaluating complex object variables (like repository_settings).
 #      - id: terrascan
 #        language: system
 #        pass_filenames: false
