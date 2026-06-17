@@ -58,6 +58,7 @@ resource "github_repository" "self" {
   source_owner                = var.repository_settings.source_owner
   source_repo                 = var.repository_settings.source_repo
   has_issues                  = var.repository_settings.has_issues
+  vulnerability_alerts        = var.repository_settings.vulnerability_alerts
   has_discussions             = var.repository_settings.has_discussions
   has_projects                = var.repository_settings.has_projects
   has_wiki                    = var.repository_settings.has_wiki
@@ -139,7 +140,6 @@ resource "time_sleep" "wait_for_dns" {
   create_duration = "${var.dns_settings.ttl}s"
 }
 
-
 resource "github_repository_pages" "self" {
   repository     = github_repository.self.name
   build_type     = var.pages_settings.build_type
@@ -210,7 +210,3 @@ resource "github_branch_protection" "self" {
   depends_on = [github_branch_default.self]
 }
 
-resource "github_repository_vulnerability_alerts" "self" {
-  count      = var.repository_settings.vulnerability_alerts ? 1 : 0
-  repository = github_repository.self.id
-}

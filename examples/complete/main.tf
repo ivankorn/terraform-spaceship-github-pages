@@ -6,9 +6,10 @@ module "spaceship_github_pages" {
   organization = "my-org"
 
   repository_settings = {
-    description      = "A complete example repository"
-    visibility       = "public"
-    license_template = "apache-2.0"
+    description          = "A complete example repository"
+    visibility           = "private"
+    license_template     = "apache-2.0"
+    vulnerability_alerts = true
   }
 
   dns_settings = {
