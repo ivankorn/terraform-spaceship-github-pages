@@ -45,6 +45,7 @@ See the [examples/](examples/) directory for more use cases.
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | 1.15.6 |
 | <a name="requirement_github"></a> [github](#requirement\_github) | ~> 6.0 |
 | <a name="requirement_spaceship"></a> [spaceship](#requirement\_spaceship) | >= 0.4.1 |
+| <a name="requirement_time"></a> [time](#requirement\_time) | ~> 0.12 |
 
 ## Providers
 
@@ -66,7 +67,6 @@ No modules.
 | [github_branch_protection.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection) | resource |
 | [github_repository.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) | resource |
 | [github_repository_pages.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_pages) | resource |
-| [github_repository_vulnerability_alerts.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_vulnerability_alerts) | resource |
 | [spaceship_dns_records.self](https://registry.terraform.io/providers/namecheap/spaceship/latest/docs/resources/dns_records) | resource |
 | [time_sleep.wait_for_dns](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 | [github_user.current](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/user) | data source |

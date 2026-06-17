@@ -5,7 +5,8 @@ module "spaceship_github_pages" {
   name   = "example-test-repo"
 
   repository_settings = {
-    visibility = "private"
+    visibility           = "private"
+    vulnerability_alerts = true
   }
 
   branch_protection = {
