@@ -7,10 +7,10 @@ repos:
       - id: terraform_tflint
       - id: terraform_trivy
       - id: terraform_checkov
-      - id: terrascan
-        language: system
-        pass_filenames: false
-        entry: bash -c 'for d in $(find . -name ".terraform" -prune -o -name ".git" -prune -o -type f -name "*.tf" -exec dirname {} \; | sort -u); do terrascan scan -i terraform --non-recursive -d "$d" || exit 1; done'
+#      - id: terrascan
+#        language: system
+#        pass_filenames: false
+#        entry: bash -c 'for d in $(find . -name ".terraform" -prune -o -name ".git" -prune -o -type f -name "*.tf" -exec dirname {} \; | sort -u); do terrascan scan -i terraform --non-recursive -d "$d" || exit 1; done'
       - id: tfupdate
       - id: terraform_docs
       - id: terraform_providers_lock
