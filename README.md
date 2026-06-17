@@ -14,8 +14,8 @@ A Terraform/OpenTofu module to provision a GitHub repository with GitHub Pages e
 > [!WARNING]
 > GitHub Pages requires the repository to be public for GitHub Free accounts.
 > According to the [official documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages), "GitHub Pages is available in public repositories with GitHub Free and GitHub Free for organizations, and in public and private repositories with GitHub Pro, GitHub Team, GitHub Enterprise Cloud, and GitHub Enterprise."
-> Keep this in mind since the default `github_repository_visibility` is set to `"private"`!
-> For personal use on a free GitHub account, you need to set the `github_repository_visibility` to `"public"`!
+> Keep this in mind since the default `repository_settings.visibility` is set to `"private"`!
+> For personal use on a free GitHub account, you need to set the `repository_settings.visibility` to `"public"`!
 
 ## Authentication
 
@@ -30,8 +30,8 @@ This module requires authentication with both GitHub and Spaceship:
 module "spaceship_github_pages" {
   source = "../"
 
-  domain                 = "example-test.com"
-  github_repository_name = "example-test-repo"
+  domain = "example-test.com"
+  name   = "example-test-repo"
 }
 ```
 
