@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/ivankorn/terraform-spaceship-github-pages/compare/v0.1.0...v0.2.0) (2026-06-17)
+
+
+### Features
+
+* configure pre-commit pipeline and contributing guidelines ([0e84c22](https://github.com/ivankorn/terraform-spaceship-github-pages/commit/0e84c2271cd8d627211b247d78c9648d0b78ba85))
+* updates to variables, branch protection, and github pages DNS handling ([f24e11b](https://github.com/ivankorn/terraform-spaceship-github-pages/commit/f24e11bf18896d04310fb4b90aff48ce09ccf189))
+
 ## 0.1.0 (2026-06-14)
 
 
