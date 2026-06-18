@@ -16,12 +16,16 @@ A Terraform/OpenTofu module to provision a GitHub repository with GitHub Pages e
 > According to the [official documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages), "GitHub Pages is available in public repositories with GitHub Free and GitHub Free for organizations, and in public and private repositories with GitHub Pro, GitHub Team, GitHub Enterprise Cloud, and GitHub Enterprise."
 > Keep this in mind since the default `repository_settings.visibility` is set to `"private"`!
 > For personal use on a free GitHub account, you need to set the `repository_settings.visibility` to `"public"`!
+>
+> **Provider Bug #3450 Workaround:** Due to a [known bug](https://github.com/integrations/terraform-provider-github/issues/3450) in the GitHub Terraform Provider, the `cname` and `https_enforced` settings cannot be reliably managed by the `github_repository_pages` resource. This module uses a `null_resource` with a `local-exec` provisioner to configure these settings via the GitHub REST API. This workaround has specific requirements:
+> - **System Dependencies:** You must have `bash`, `curl`, and `jq` installed on the system where Terraform is executed.
 
 ## Authentication
 
 This module requires authentication with both GitHub and Spaceship:
 
-1. **GitHub**: You can authenticate using the GitHub CLI by running `gh auth login`, or by setting the `GITHUB_TOKEN` environment variable.
+1. **GitHub**: You must set the `GITHUB_TOKEN` environment variable. While Terraform can authenticate using the GitHub CLI (`gh auth login`), the `local-exec` provisioner script used for the GitHub Pages workaround *requires* the `GITHUB_TOKEN` environment variable to be explicitly set to interact directly with the GitHub API.
+   - **Note for Deletion**: If you plan to destroy the repository using Terraform, you must have the `delete_repo` scope on your token.
 2. **Spaceship**: You must provide your Spaceship API credentials by setting the `SPACESHIP_API_KEY` and `SPACESHIP_API_SECRET` environment variables.
 
 ## Usage Example
@@ -44,6 +48,7 @@ See the [examples/](examples/) directory for more use cases.
 | ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | 1.15.6 |
 | <a name="requirement_github"></a> [github](#requirement\_github) | ~> 6.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.0 |
 | <a name="requirement_spaceship"></a> [spaceship](#requirement\_spaceship) | >= 0.4.1 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | ~> 0.12 |
 
@@ -52,8 +57,8 @@ See the [examples/](examples/) directory for more use cases.
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_github"></a> [github](#provider\_github) | 6.12.1 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
 | <a name="provider_spaceship"></a> [spaceship](#provider\_spaceship) | 0.4.1 |
-| <a name="provider_time"></a> [time](#provider\_time) | 0.14.0 |
 
 ## Modules
 
@@ -63,12 +68,12 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [github_branch_default.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_default) | resource |
-| [github_branch_protection.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection) | resource |
-| [github_repository.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) | resource |
-| [github_repository_pages.self](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_pages) | resource |
-| [spaceship_dns_records.self](https://registry.terraform.io/providers/namecheap/spaceship/latest/docs/resources/dns_records) | resource |
-| [time_sleep.wait_for_dns](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
+| [github_branch_default.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_default) | resource |
+| [github_branch_protection.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/branch_protection) | resource |
+| [github_repository.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository) | resource |
+| [github_repository_pages.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/repository_pages) | resource |
+| [null_resource.configure_cname_enforce_https](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [spaceship_dns_records.this](https://registry.terraform.io/providers/namecheap/spaceship/latest/docs/resources/dns_records) | resource |
 | [github_user.current](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/user) | data source |
 
 ## Inputs
@@ -80,8 +85,8 @@ No modules.
 | <a name="input_domain"></a> [domain](#input\_domain) | The custom domain for GitHub Pages (e.g., example.com) | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name of the GitHub repository to create | `string` | n/a | yes |
 | <a name="input_organization"></a> [organization](#input\_organization) | Optional GitHub organization to create the repository in | `string` | `""` | no |
-| <a name="input_pages_settings"></a> [pages\_settings](#input\_pages\_settings) | Settings for the GitHub Pages configuration | <pre>object({<br/>    build_type     = optional(string, "legacy")<br/>    public         = optional(bool)<br/>    https_enforced = optional(bool, true)<br/>    source = optional(object({<br/>      branch = string<br/>      path   = optional(string, "/")<br/>      }), {<br/>      branch = "master"<br/>      path   = "/"<br/>    })<br/>  })</pre> | `{}` | no |
-| <a name="input_repository_settings"></a> [repository\_settings](#input\_repository\_settings) | Detailed settings for the GitHub repository | <pre>object({<br/>    description                 = optional(string, "GitHub Pages repository")<br/>    visibility                  = optional(string, "private")<br/>    homepage_url                = optional(string)<br/>    fork                        = optional(bool, false)<br/>    source_owner                = optional(string)<br/>    source_repo                 = optional(string)<br/>    has_issues                  = optional(bool, true)<br/>    has_discussions             = optional(bool, false)<br/>    has_projects                = optional(bool, false)<br/>    has_wiki                    = optional(bool, false)<br/>    is_template                 = optional(bool, false)<br/>    allow_merge_commit          = optional(bool, false)<br/>    allow_squash_merge          = optional(bool, false)<br/>    allow_rebase_merge          = optional(bool, true)<br/>    allow_auto_merge            = optional(bool, false)<br/>    allow_update_branch         = optional(bool, true)<br/>    allow_forking               = optional(bool, true)<br/>    squash_merge_commit_title   = optional(string, "PR_TITLE")<br/>    squash_merge_commit_message = optional(string, "PR_BODY")<br/>    merge_commit_title          = optional(string)<br/>    merge_commit_message        = optional(string)<br/>    delete_branch_on_merge      = optional(bool, true)<br/>    web_commit_signoff_required = optional(bool, true)<br/>    auto_init                   = optional(bool, true)<br/>    gitignore_template          = optional(string)<br/>    license_template            = optional(string, "apache-2.0")<br/>    default_branch              = optional(string, "master")<br/>    archived                    = optional(bool, false)<br/>    archive_on_destroy          = optional(bool, false)<br/>    topics                      = optional(list(string), [])<br/>    vulnerability_alerts        = optional(bool, true)<br/>    template = optional(object({<br/>      owner                = string<br/>      repository           = string<br/>      include_all_branches = optional(bool, false)<br/>    }))<br/>    security_and_analysis = optional(object({<br/>      advanced_security = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_push_protection = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_ai_detection = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_non_provider_patterns = optional(object({<br/>        status = string<br/>      }))<br/>    }))<br/>  })</pre> | `{}` | no |
+| <a name="input_pages_settings"></a> [pages\_settings](#input\_pages\_settings) | Settings for the GitHub Pages configuration | <pre>object({<br/>    build_type = optional(string, "legacy")<br/>    public     = optional(bool)<br/>    # Note: 'https_enforced' is temporarily disabled due to GitHub provider bug #3450. A local-exec provisioner handles this.<br/>    https_enforced = optional(bool, true)<br/>    source = optional(object({<br/>      branch = string<br/>      path   = optional(string, "/")<br/>      }), {<br/>      branch = "master"<br/>      path   = "/"<br/>    })<br/>  })</pre> | `{}` | no |
+| <a name="input_repository_settings"></a> [repository\_settings](#input\_repository\_settings) | Detailed settings for the GitHub repository | <pre>object({<br/>    description                 = optional(string, "GitHub Pages repository")<br/>    visibility                  = optional(string, "private")<br/>    homepage_url                = optional(string)<br/>    fork                        = optional(bool, false)<br/>    source_owner                = optional(string)<br/>    source_repo                 = optional(string)<br/>    has_issues                  = optional(bool, true)<br/>    has_discussions             = optional(bool, false)<br/>    has_projects                = optional(bool, false)<br/>    has_wiki                    = optional(bool, false)<br/>    is_template                 = optional(bool, false)<br/>    allow_merge_commit          = optional(bool, false)<br/>    allow_squash_merge          = optional(bool, false)<br/>    allow_rebase_merge          = optional(bool, true)<br/>    allow_auto_merge            = optional(bool, false)<br/>    allow_update_branch         = optional(bool, true)<br/>    allow_forking               = optional(bool, true)<br/>    squash_merge_commit_title   = optional(string, "PR_TITLE")<br/>    squash_merge_commit_message = optional(string, "PR_BODY")<br/>    merge_commit_title          = optional(string)<br/>    merge_commit_message        = optional(string)<br/>    delete_branch_on_merge      = optional(bool, true)<br/>    web_commit_signoff_required = optional(bool, true)<br/>    auto_init                   = optional(bool, true)<br/>    gitignore_template          = optional(string)<br/>    license_template            = optional(string, "apache-2.0")<br/>    default_branch              = optional(string, "master")<br/>    archived                    = optional(bool, false)<br/>    archive_on_destroy          = optional(bool, false)<br/>    topics                      = optional(list(string), [])<br/>    # Note: This attribute is deprecated in the provider, but currently required to satisfy security and analysis checks.<br/>    vulnerability_alerts = optional(bool, true)<br/>    template = optional(object({<br/>      owner                = string<br/>      repository           = string<br/>      include_all_branches = optional(bool, false)<br/>    }))<br/>    security_and_analysis = optional(object({<br/>      advanced_security = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_push_protection = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_ai_detection = optional(object({<br/>        status = string<br/>      }))<br/>      secret_scanning_non_provider_patterns = optional(object({<br/>        status = string<br/>      }))<br/>    }))<br/>    # Note: The inline pages configuration is deprecated. It is retained here for backwards compatibility, but pages_settings should be preferred.<br/>    pages = optional(object({<br/>      build_type = optional(string)<br/>      # Note: 'cname' is temporarily disabled due to GitHub provider bug #3450. A local-exec provisioner handles this.<br/>      cname = optional(string)<br/>      source = optional(object({<br/>        branch = string<br/>        path   = optional(string)<br/>      }))<br/>    }))<br/>  })</pre> | `{}` | no |
 | <a name="input_user"></a> [user](#input\_user) | Optional GitHub user to create the repository under | `string` | `""` | no |
 
 ## Outputs
