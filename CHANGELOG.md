@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/ivankorn/terraform-spaceship-github-pages/compare/v0.2.0...v0.2.1) (2026-06-18)
+
+
+### Bug Fixes
+
+* implement local-exec workaround for github pages CNAME ([6dc1d6e](https://github.com/ivankorn/terraform-spaceship-github-pages/commit/6dc1d6ed79aed0199df46ce44dccfa9f21deec6b))
+
 ## [0.2.0](https://github.com/ivankorn/terraform-spaceship-github-pages/compare/v0.1.0...v0.2.0) (2026-06-17)
 
 
