@@ -104,7 +104,8 @@ variable "repository_settings" {
     archived                    = optional(bool, false)
     archive_on_destroy          = optional(bool, false)
     topics                      = optional(list(string), [])
-    vulnerability_alerts        = optional(bool, true)
+    # Note: This attribute is deprecated in the provider, but currently required to satisfy security and analysis checks.
+    vulnerability_alerts = optional(bool, true)
     template = optional(object({
       owner                = string
       repository           = string
@@ -127,6 +128,16 @@ variable "repository_settings" {
         status = string
       }))
     }))
+    # Note: The inline pages configuration is deprecated. It is retained here for backwards compatibility, but pages_settings should be preferred.
+    pages = optional(object({
+      build_type = optional(string)
+      # Note: 'cname' is temporarily disabled due to GitHub provider bug #3450. A local-exec provisioner handles this.
+      cname = optional(string)
+      source = optional(object({
+        branch = string
+        path   = optional(string)
+      }))
+    }))
   })
   default = {}
 }
@@ -134,8 +145,9 @@ variable "repository_settings" {
 variable "pages_settings" {
   description = "Settings for the GitHub Pages configuration"
   type = object({
-    build_type     = optional(string, "legacy")
-    public         = optional(bool)
+    build_type = optional(string, "legacy")
+    public     = optional(bool)
+    # Note: 'https_enforced' is temporarily disabled due to GitHub provider bug #3450. A local-exec provisioner handles this.
     https_enforced = optional(bool, true)
     source = optional(object({
       branch = string

@@ -49,15 +49,21 @@ locals {
   all_dns_records = concat(local.default_dns_records, var.dns_settings.records)
 }
 
-resource "github_repository" "self" {
-  name                        = var.name
-  description                 = var.repository_settings.description
-  visibility                  = var.repository_settings.visibility
-  homepage_url                = var.repository_settings.homepage_url
-  fork                        = var.repository_settings.fork
-  source_owner                = var.repository_settings.source_owner
-  source_repo                 = var.repository_settings.source_repo
-  has_issues                  = var.repository_settings.has_issues
+resource "spaceship_dns_records" "this" {
+  domain  = var.domain
+  records = local.all_dns_records
+}
+
+resource "github_repository" "this" {
+  name         = var.name
+  description  = var.repository_settings.description
+  visibility   = var.repository_settings.visibility
+  homepage_url = var.repository_settings.homepage_url
+  fork         = var.repository_settings.fork
+  source_owner = var.repository_settings.source_owner
+  source_repo  = var.repository_settings.source_repo
+  has_issues   = var.repository_settings.has_issues
+  # Note: This attribute is deprecated in the provider, but currently required to satisfy security and analysis checks.
   vulnerability_alerts        = var.repository_settings.vulnerability_alerts
   has_discussions             = var.repository_settings.has_discussions
   has_projects                = var.repository_settings.has_projects
@@ -126,26 +132,38 @@ resource "github_repository" "self" {
       }
     }
   }
+
+  dynamic "pages" {
+    for_each = var.repository_settings.pages != null ? [var.repository_settings.pages] : []
+    content {
+      build_type = pages.value.build_type
+      cname      = pages.value.cname
+      dynamic "source" {
+        for_each = pages.value.source != null ? [pages.value.source] : []
+        content {
+          branch = source.value.branch
+          path   = source.value.path
+        }
+      }
+    }
+  }
 }
 
-resource "github_branch_default" "self" {
-  repository = github_repository.self.name
+resource "github_branch_default" "this" {
+  repository = github_repository.this.name
   branch     = var.repository_settings.default_branch
   rename     = true
 }
 
 
-resource "time_sleep" "wait_for_dns" {
-  depends_on      = [spaceship_dns_records.self]
-  create_duration = "${var.dns_settings.ttl}s"
-}
-
-resource "github_repository_pages" "self" {
-  repository     = github_repository.self.name
-  build_type     = var.pages_settings.build_type
-  cname          = var.domain
-  public         = var.pages_settings.public
-  https_enforced = var.domain != "" ? var.pages_settings.https_enforced : null
+resource "github_repository_pages" "this" {
+  repository = github_repository.this.name
+  build_type = var.pages_settings.build_type
+  # Note: 'cname' is temporarily disabled due to GitHub provider bug #3450. A local-exec provisioner handles this.
+  # cname          = var.domain
+  public = var.pages_settings.public
+  # Note: 'https_enforced' is temporarily disabled due to GitHub provider bug #3450. A local-exec provisioner handles this.
+  # https_enforced = var.domain != "" ? var.pages_settings.https_enforced : null
 
   dynamic "source" {
     for_each = var.pages_settings.build_type == "legacy" && var.pages_settings.source != null ? [var.pages_settings.source] : []
@@ -156,18 +174,91 @@ resource "github_repository_pages" "self" {
   }
 
   depends_on = [
-    github_branch_default.self,
-    time_sleep.wait_for_dns
+    github_branch_default.this,
+    spaceship_dns_records.this
   ]
 }
 
-resource "spaceship_dns_records" "self" {
-  domain  = var.domain
-  records = local.all_dns_records
+# This is a temporarily workaround for GitHub provider bug #3450
+resource "null_resource" "configure_cname_enforce_https" {
+  provisioner "local-exec" {
+    when        = create
+    interpreter = ["bash", "-c"]
+    command     = <<-EOT
+      #!/usr/bin/env bash
+      set -e
+
+      if [ -z "$${GITHUB_TOKEN}" ]; then
+        echo "GITHUB_TOKEN is not set. Skipping GitHub Pages configuration."
+        exit 0
+      fi
+
+      API_URL="https://api.github.com/repos/${local.owner}/${github_repository.this.name}/pages"
+      HEADERS=(
+        "-H" "Accept: application/vnd.github+json"
+        "-H" "Authorization: Bearer $${GITHUB_TOKEN}"
+        "-H" "X-GitHub-Api-Version: 2026-03-10"
+      )
+
+      echo "Waiting up to 10 minutes for GitHub Pages to be built..."
+      for i in {1..60}; do
+        STATUS=$(curl -sL "$${HEADERS[@]}" "$${API_URL}" | jq -r '.status // empty')
+        if [ "$${STATUS}" == "built" ]; then
+          echo "Pages built successfully."
+          break
+        fi
+        echo "Current status: $${STATUS:-unknown}. Waiting..."
+        sleep 10
+      done
+
+      if [ "$${STATUS}" != "built" ]; then
+        echo "Warning: GitHub Pages failed to build within 10 minutes."
+      fi
+
+      echo "Adding CNAME ${var.domain}..."
+      for i in {1..60}; do
+        curl -sL -X PUT "$${HEADERS[@]}" "$${API_URL}" -d "{\"cname\":\"${var.domain}\"}" > /dev/null
+
+        CURRENT_CNAME=$(curl -sL "$${HEADERS[@]}" "$${API_URL}" | jq -r '.cname // empty')
+        if [ "$CURRENT_CNAME" == "${var.domain}" ]; then
+          echo "CNAME accepted successfully."
+          break
+        fi
+        echo "CNAME not yet accepted (DNS might still be propagating). Waiting..."
+        sleep 10
+      done
+
+      if [ "${try(var.pages_settings.https_enforced, true)}" == "true" ]; then
+        echo "Waiting up to 20 minutes for HTTPS certificate approval..."
+        for i in {1..120}; do
+          CERT_STATE=$(curl -sL "$${HEADERS[@]}" "$${API_URL}" | jq -r '.https_certificate.state // empty')
+          if [ "$${CERT_STATE}" == "approved" ]; then
+            echo "HTTPS certificate approved."
+            break
+          fi
+          echo "Current certificate state: $${CERT_STATE:-unknown}. Waiting..."
+          sleep 10
+        done
+
+        if [ "$${CERT_STATE}" == "approved" ]; then
+          echo "Enforcing HTTPS..."
+          curl -sL -X PUT "$${HEADERS[@]}" \
+            "$${API_URL}" \
+            -d "{\"cname\":\"${var.domain}\", \"https_enforced\": true}" > /dev/null
+        else
+          echo "Warning: HTTPS certificate was not approved within 20 minutes. While the API promise is 15 minutes."
+        fi
+      fi
+    EOT
+  }
+
+  depends_on = [
+    github_repository_pages.this,
+  ]
 }
 
-resource "github_branch_protection" "self" {
-  repository_id                   = github_repository.self.node_id
+resource "github_branch_protection" "this" {
+  repository_id                   = github_repository.this.node_id
   pattern                         = var.branch_protection.pattern != null ? var.branch_protection.pattern : var.repository_settings.default_branch
   enforce_admins                  = var.branch_protection.enforce_admins
   require_signed_commits          = var.branch_protection.require_signed_commits
@@ -207,6 +298,6 @@ resource "github_branch_protection" "self" {
     }
   }
 
-  depends_on = [github_branch_default.self]
+  depends_on = [null_resource.configure_cname_enforce_https]
 }
 
