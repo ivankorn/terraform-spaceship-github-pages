@@ -58,7 +58,7 @@ See the [examples/](examples/) directory for more use cases.
 | ---- | ------- |
 | <a name="provider_github"></a> [github](#provider\_github) | 6.12.1 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.3.0 |
-| <a name="provider_spaceship"></a> [spaceship](#provider\_spaceship) | 0.4.1 |
+| <a name="provider_spaceship"></a> [spaceship](#provider\_spaceship) | 0.5.1 |
 
 ## Modules
 
